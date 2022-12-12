@@ -14,3 +14,5 @@ TODOs:
     - [ ] Serve 
     - [ ] Migrate
     
+- [ ] Docker Image
+    
