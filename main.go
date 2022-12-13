@@ -1,7 +1,11 @@
 package main
 
 import (
+	"log"
 	"net/http"
+	"os"
+
+	"github.com/urfave/cli/v2"
 
 	"github.com/gin-gonic/gin"
 )
@@ -25,6 +29,26 @@ func HandleEvents(c *gin.Context) {
 
 func main() {
 
+	app := &cli.App{
+		Commands: []*cli.Command{
+			{
+				Name:    "serve",
+				Aliases: []string{"s"},
+				Usage:   "Runs the server",
+				Action: func(cCtx *cli.Context) error {
+					EventServer()
+					return nil
+				},
+			},
+		},
+	}
+
+	if err := app.Run(os.Args); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func EventServer() {
 	router := gin.Default()
 	router.POST("/events", HandleEvents)
 
