@@ -11,7 +11,7 @@ TODOs:
     - [ ] Delete
     
 - [ ] Create CLI:
-    - [ ] Serve 
+    - [X] Serve 
     - [ ] Migrate
     
 - [ ] Docker Image
