@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -35,9 +36,31 @@ func main() {
 				Name:    "serve",
 				Aliases: []string{"s"},
 				Usage:   "Runs the server",
-				Action: func(cCtx *cli.Context) error {
+				Action: func(c *cli.Context) error {
 					EventServer()
 					return nil
+				},
+			},
+			{
+				Name:  "db",
+				Usage: "Database migrations",
+				Subcommands: []*cli.Command{
+					{
+						Name:  "create_sql",
+						Usage: "Create up and down SQL migrations",
+						Action: func(c *cli.Context) error {
+							fmt.Println("Create command")
+							return nil
+						},
+					},
+					{
+						Name:  "init",
+						Usage: "Create migration tables",
+						Action: func(c *cli.Context) error {
+							fmt.Println("Create migration")
+							return nil
+						},
+					},
 				},
 			},
 		},
