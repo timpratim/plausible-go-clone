@@ -9,6 +9,10 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/gin-gonic/gin"
+	"github.com/plausible-go-clone/migrations"
+	"github.com/uptrace/go-clickhouse/ch"
+	"github.com/uptrace/go-clickhouse/chdebug"
+	"github.com/uptrace/go-clickhouse/chmigrate"
 )
 
 type Event struct {
@@ -29,7 +33,11 @@ func HandleEvents(c *gin.Context) {
 }
 
 func main() {
-
+	db := ch.Connect(ch.WithDSN("clickhouse://localhost:8123/test?sslmode=disable"))
+	db.AddQueryHook(chdebug.NewQueryHook(
+		chdebug.WithEnabled(false),
+		chdebug.FromEnv("CHDEBUG"),
+	))
 	app := &cli.App{
 		Commands: []*cli.Command{
 			{
@@ -41,34 +49,40 @@ func main() {
 					return nil
 				},
 			},
-			{
-				Name:  "db",
-				Usage: "Database migrations",
-				Subcommands: []*cli.Command{
-					{
-						Name:  "create_sql",
-						Usage: "Create up and down SQL migrations",
-						Action: func(c *cli.Context) error {
-							fmt.Println("Create command")
-							return nil
-						},
-					},
-					{
-						Name:  "init",
-						Usage: "Create migration tables",
-						Action: func(c *cli.Context) error {
-							fmt.Println("Create migration")
-							return nil
-						},
-					},
-				},
-			},
+
+			NewDBcommand(db, chmigrate.NewMigrator(db, migrations.Migrations)),
 		},
 	}
 
 	if err := app.Run(os.Args); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func NewDBcommand(db *ch.DB, migrator *chmigrate.Migrator) *cli.Command {
+	return &cli.Command{
+		Name:  "db",
+		Usage: "Database migrations",
+		Subcommands: []*cli.Command{
+			{
+				Name:  "create_sql",
+				Usage: "Create up and down SQL migrations",
+				Action: func(c *cli.Context) error {
+					fmt.Println("Create command")
+					return nil
+				},
+			},
+			{
+				Name:  "init",
+				Usage: "Create migration tables",
+				Action: func(c *cli.Context) error {
+					fmt.Println("Create migration")
+					return nil
+				},
+			},
+		},
+	}
+
 }
 
 func EventServer() {
