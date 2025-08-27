@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Website - Plausible Analytics Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .button {
+            background: #007cba;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .button:hover {
+            background: #005a87;
+        }
+        .stats {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .nav {
+            background: #333;
+            padding: 10px 0;
+            margin-bottom: 20px;
+        }
+        .nav a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="#" onclick="navigateTo('/')">Home</a>
+        <a href="#" onclick="navigateTo('/about')">About</a>
+        <a href="#" onclick="navigateTo('/contact')">Contact</a>
+        <a href="#" onclick="navigateTo('/pricing')">Pricing</a>
+    </nav>
+
+    <h1>🚀 Plausible Analytics Test Website</h1>
+    
+    <p>This is a test website to demonstrate your Plausible Analytics clone. Every page view and interaction is being tracked!</p>
+
+    <div class="stats">
+        <h3>📊 What's Being Tracked:</h3>
+        <ul>
+            <li>Page views (automatic)</li>
+            <li>Custom events (button clicks)</li>
+            <li>UTM parameters</li>
+            <li>Session data</li>
+            <li>Browser/OS/Device info</li>
+        </ul>
+    </div>
+
+    <h2>Test Interactions</h2>
+    
+    <button class="button" onclick="trackSignup()">📝 Sign Up (Custom Event)</button>
+    <button class="button" onclick="trackDownload()">⬇️ Download (Custom Event)</button>
+    <button class="button" onclick="trackPurchase()">💳 Purchase (Goal Event)</button>
+    
+    <h2>Navigation Test</h2>
+    <p>Click these links to test SPA navigation tracking:</p>
+    
+    <a href="#" class="button" onclick="navigateTo('/features')">Features Page</a>
+    <a href="#" class="button" onclick="navigateTo('/blog')">Blog Page</a>
+    <a href="#" class="button" onclick="navigateTo('/dashboard')">Dashboard</a>
+
+    <h2>External Links</h2>
+    <p>Test referrer tracking by visiting from:</p>
+    <ul>
+        <li><a href="https://google.com" target="_blank">Google</a> (then come back)</li>
+        <li><a href="https://github.com" target="_blank">GitHub</a> (then come back)</li>
+    </ul>
+
+    <h2>UTM Parameter Test</h2>
+    <p>Add UTM parameters to the URL to test campaign tracking:</p>
+    <code>?utm_source=newsletter&utm_medium=email&utm_campaign=launch</code>
+
+    <div class="stats">
+        <h3>🔍 View Your Analytics:</h3>
+        <p>Check your analytics dashboard at:</p>
+        <ul>
+            <li><strong>Stats:</strong> <a href="http://localhost:8080/api/stats?domain=test-website.local&period=7d" target="_blank">Dashboard Stats</a></li>
+            <li><strong>Realtime:</strong> <a href="http://localhost:8080/api/realtime?domain=test-website.local" target="_blank">Live Visitors</a></li>
+            <li><strong>Pages:</strong> <a href="http://localhost:8080/api/breakdown/pages?domain=test-website.local&period=7d" target="_blank">Top Pages</a></li>
+            <li><strong>Referrers:</strong> <a href="http://localhost:8080/api/breakdown/referrers?domain=test-website.local&period=7d" target="_blank">Traffic Sources</a></li>
+        </ul>
+    </div>
+
+    <!-- Plausible Analytics Tracking Script -->
+    <script>
+        // Override the domain for testing
+        window.plausible_endpoint = 'http://localhost:8080/api/event';
+        
+        // Custom domain for testing (since we're serving from file://)
+        var customDomain = 'test-website.local';
+    </script>
+    
+    <!-- Load the tracking script -->
+    <script>
+        // Inline the tracking script with custom domain
+        (function() {
+            'use strict';
+
+            var endpoint = window.plausible_endpoint || 'http://localhost:8080/api/event';
+            var domain = customDomain || window.location.hostname;
+
+            function trigger(eventName, options) {
+                options = options || {};
+                
+                var payload = {
+                    name: eventName,
+                    domain: domain,
+                    url: window.location.href,
+                    referrer: document.referrer || '',
+                    props: options.props || {}
+                };
+
+                // Add UTM parameters if present
+                var urlParams = new URLSearchParams(window.location.search);
+                ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'].forEach(function(param) {
+                    var value = urlParams.get(param);
+                    if (value) {
+                        payload[param] = value;
+                    }
+                });
+
+                // Send the event
+                var request = new XMLHttpRequest();
+                request.open('POST', endpoint, true);
+                request.setRequestHeader('Content-Type', 'application/json');
+                
+                request.send(JSON.stringify(payload));
+                console.log('📊 Tracked:', eventName, payload);
+            }
+
+            // Track pageview on load
+            function trackPageview() {
+                trigger('pageview');
+            }
+
+            // Track custom events
+            function plausible(eventName, options) {
+                trigger(eventName, options);
+            }
+
+            // Auto-track pageviews
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', trackPageview);
+            } else {
+                trackPageview();
+            }
+
+            // Expose functions globally
+            window.plausible = plausible;
+            window.trackEvent = trigger;
+        })();
+
+        // Custom event functions
+        function trackSignup() {
+            window.trackEvent('signup', {
+                props: {
+                    method: 'email',
+                    source: 'test_page'
+                }
+            });
+            alert('✅ Signup event tracked!');
+        }
+
+        function trackDownload() {
+            window.trackEvent('download', {
+                props: {
+                    file: 'demo.pdf',
+                    size: '2.5MB'
+                }
+            });
+            alert('✅ Download event tracked!');
+        }
+
+        function trackPurchase() {
+            window.trackEvent('purchase', {
+                props: {
+                    plan: 'premium',
+                    amount: 29.99,
+                    currency: 'USD'
+                }
+            });
+            alert('✅ Purchase event tracked!');
+        }
+
+        function navigateTo(path) {
+            // Simulate SPA navigation
+            history.pushState({}, '', path);
+            
+            // Update page content
+            document.querySelector('h1').textContent = '📄 ' + path.substring(1).toUpperCase() + ' Page';
+            
+            // Track the new pageview
+            setTimeout(function() {
+                window.trackEvent('pageview');
+                alert('✅ Navigation to ' + path + ' tracked!');
+            }, 100);
+        }
+    </script>
+</body>
+</html>
